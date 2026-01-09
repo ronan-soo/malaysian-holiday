@@ -1,17 +1,22 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { HOLIDAYS_2026, MALAYSIAN_STATES } from './constants';
 import { MalaysianState, PublicHoliday, LongHolidayProposal } from './types';
 import { getLongHolidays } from './utils/optimizer';
 import HolidayList from './components/HolidayList';
 import CalendarView from './components/CalendarView';
 import ProposalCard from './components/ProposalCard';
+import { TravelPreferences } from './services/gemini';
 
 const App: React.FC = () => {
   const [selectedState, setSelectedState] = useState<MalaysianState>('All');
   const [maxLeave, setMaxLeave] = useState<number>(2);
   const [minTotalDays, setMinTotalDays] = useState<number>(4);
   const [viewMode, setViewMode] = useState<'calendar' | 'proposals'>('proposals');
+  
+  // New Preferences
+  const [includeRedLight, setIncludeRedLight] = useState(false);
+  const [travelPreference, setTravelPreference] = useState<'Local' | 'Overseas' | 'Both'>('Both');
 
   const filteredHolidays = useMemo(() => {
     return HOLIDAYS_2026.filter(h => 
@@ -22,6 +27,11 @@ const App: React.FC = () => {
   const proposals = useMemo(() => {
     return getLongHolidays(2026, filteredHolidays, maxLeave, minTotalDays);
   }, [filteredHolidays, maxLeave, minTotalDays]);
+
+  const travelPrefs: TravelPreferences = {
+    includeRedLight,
+    travelPreference
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -87,7 +97,6 @@ const App: React.FC = () => {
                 >
                   {MALAYSIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
                 </select>
-                <p className="text-[10px] text-slate-400 italic">Includes state-specific and federal holidays</p>
               </div>
 
               <div className="space-y-4">
@@ -96,13 +105,13 @@ const App: React.FC = () => {
                    <span className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded">{maxLeave}</span>
                 </div>
                 <input 
-                  type="range" min="0" max="4" step="1" 
+                  type="range" min="0" max="10" step="1" 
                   value={maxLeave}
                   onChange={(e) => setMaxLeave(parseInt(e.target.value))}
                   className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-bold">
-                  <span>0 DAYS</span><span>4 DAYS</span>
+                  <span>0 DAYS</span><span>10 DAYS</span>
                 </div>
               </div>
 
@@ -112,13 +121,53 @@ const App: React.FC = () => {
                    <span className="text-emerald-600 font-bold bg-emerald-50 px-2 rounded">{minTotalDays}</span>
                 </div>
                 <input 
-                  type="range" min="3" max="10" step="1" 
+                  type="range" min="3" max="14" step="1" 
                   value={minTotalDays}
                   onChange={(e) => setMinTotalDays(parseInt(e.target.value))}
                   className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400 font-bold">
-                  <span>3 DAYS</span><span>10 DAYS</span>
+                  <span>3 DAYS</span><span>14 DAYS</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">AI Preferences</label>
+                
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-500">Destination Type</div>
+                  <div className="flex flex-col gap-2">
+                    {(['Local', 'Overseas', 'Both'] as const).map((opt) => (
+                      <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                        <input 
+                          type="radio" 
+                          name="travelPref"
+                          checked={travelPreference === opt}
+                          onChange={() => setTravelPreference(opt)}
+                          className="w-4 h-4 accent-emerald-600"
+                        />
+                        <span className={`text-sm ${travelPreference === opt ? 'text-emerald-700 font-bold' : 'text-slate-600 group-hover:text-slate-800'}`}>
+                          {opt}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="relative inline-block w-10 h-5 align-middle select-none">
+                    <input 
+                      type="checkbox" 
+                      id="rld-toggle" 
+                      checked={includeRedLight}
+                      onChange={(e) => setIncludeRedLight(e.target.checked)}
+                      className="absolute block w-5 h-5 bg-white border-4 border-slate-200 rounded-full appearance-none cursor-pointer checked:bg-rose-500 checked:right-0 checked:border-rose-500 right-5 transition-all duration-200"
+                    />
+                    <label htmlFor="rld-toggle" className="block h-5 overflow-hidden bg-slate-200 rounded-full cursor-pointer"></label>
+                  </div>
+                  <label htmlFor="rld-toggle" className="text-sm font-medium text-slate-700 cursor-pointer">
+                    Nightlife / RLD Interest
+                  </label>
                 </div>
               </div>
             </div>
@@ -150,7 +199,7 @@ const App: React.FC = () => {
                  </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {proposals.map(p => (
-                    <ProposalCard key={p.id} proposal={p} />
+                    <ProposalCard key={p.id} proposal={p} preferences={travelPrefs} />
                   ))}
                   {proposals.length === 0 && (
                     <div className="col-span-full py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">

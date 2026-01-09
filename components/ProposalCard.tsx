@@ -2,10 +2,11 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { LongHolidayProposal } from '../types';
-import { getAiRecommendation } from '../services/gemini';
+import { getAiRecommendation, TravelPreferences } from '../services/gemini';
 
 interface ProposalCardProps {
   proposal: LongHolidayProposal;
+  preferences: TravelPreferences;
 }
 
 /**
@@ -16,13 +17,13 @@ const parseDate = (dateStr: string) => {
   return new Date(year, month - 1, day);
 };
 
-const ProposalCard: React.FC<ProposalCardProps> = ({ proposal }) => {
+const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, preferences }) => {
   const [recommendation, setRecommendation] = React.useState<string | null>(null);
   const [loadingAi, setLoadingAi] = React.useState(false);
 
   const fetchAiAdvice = async () => {
     setLoadingAi(true);
-    const advice = await getAiRecommendation(proposal);
+    const advice = await getAiRecommendation(proposal, preferences);
     setRecommendation(advice || "No advice available.");
     setLoadingAi(false);
   };
@@ -66,7 +67,13 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal }) => {
               <h5 className="font-bold mb-2 text-emerald-700 flex items-center gap-1 italic">
                 ✨ AI Recommendations
               </h5>
-              <div dangerouslySetInnerHTML={{ __html: recommendation.replace(/\n/g, '<br/>') }} />
+              <div className="ai-markdown-content" dangerouslySetInnerHTML={{ __html: recommendation.replace(/\n/g, '<br/>') }} />
+              <button 
+                onClick={() => setRecommendation(null)}
+                className="mt-4 text-[10px] uppercase font-bold text-slate-400 hover:text-emerald-600"
+              >
+                Clear Suggestions
+              </button>
             </div>
           ) : (
             <button 
@@ -80,10 +87,10 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal }) => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Thinking...
+                  Customizing trip...
                 </>
               ) : (
-                <>✨ Get Trip Ideas</>
+                <>✨ Get Custom Trip Ideas</>
               )}
             </button>
           )}
