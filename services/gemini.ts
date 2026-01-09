@@ -11,7 +11,7 @@ export const getAiRecommendation = async (
   proposal: LongHolidayProposal, 
   prefs: TravelPreferences
 ) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
   
   const locationInstruction = prefs.travelPreference === 'Local' 
     ? "Focus exclusively on destinations within Malaysia."
@@ -43,8 +43,18 @@ export const getAiRecommendation = async (
       contents: prompt,
     });
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Recommendation Error:", error);
-    return "Unable to load travel recommendations at this time.";
+    
+    // Check for rate limiting (HTTP 429) or exhaustion messages
+    if (error.status === 429 || error.message?.includes('429') || error.message?.toLowerCase().includes('exhausted')) {
+      return `⚠️ **Rate Limit Exceeded**
+      
+The AI model is currently busy or you have hit the usage limits for the \`gemini-3-flash-preview\` model. 
+
+**Suggestion:** Wait a minute and try again.`;
+    }
+
+    return `⚠️ **Unable to generate recommendations**\n\nError: ${error.message || "Unknown error occurred."}`;
   }
 };
