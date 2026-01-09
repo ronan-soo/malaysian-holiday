@@ -11,7 +11,7 @@ export const getAiRecommendation = async (
   proposal: LongHolidayProposal, 
   prefs: TravelPreferences
 ) => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const locationInstruction = prefs.travelPreference === 'Local' 
     ? "Focus exclusively on destinations within Malaysia."
@@ -39,7 +39,7 @@ export const getAiRecommendation = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
     return response.text;
