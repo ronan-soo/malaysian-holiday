@@ -11,7 +11,7 @@ export const getAiRecommendation = async (
   proposal: LongHolidayProposal, 
   prefs: TravelPreferences
 ) => {
-  const ai = new GoogleGenAI({ apiKey: "AIzaSyCyRBZPrdJk7sgE-7k5KTPETBAv0R6125w" });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const locationInstruction = prefs.travelPreference === 'Local' 
     ? "Focus exclusively on destinations within Malaysia."
