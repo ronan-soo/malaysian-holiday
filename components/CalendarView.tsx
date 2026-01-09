@@ -2,18 +2,13 @@
 import React from 'react';
 import { 
   format, 
-  startOfMonth, 
   endOfMonth, 
-  startOfWeek, 
   endOfWeek, 
   eachDayOfInterval, 
   isSameMonth, 
-  isSameDay, 
-  parseISO,
-  addMonths,
-  subMonths
+  isSameDay
 } from 'date-fns';
-import { PublicHoliday, LongHolidayProposal, DayType } from '../types';
+import { PublicHoliday, LongHolidayProposal } from '../types';
 
 interface CalendarViewProps {
   holidays: PublicHoliday[];
@@ -21,11 +16,20 @@ interface CalendarViewProps {
   selectedState: string;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ holidays, proposals, selectedState }) => {
-  const [currentDate, setCurrentDate] = React.useState(new Date(2026, 0, 1));
+/**
+ * Custom implementations for missing date-fns members to bypass module resolution issues.
+ */
+const getStartOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
+const getStartOfWeek = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  return d;
+};
+
+const CalendarView: React.FC<CalendarViewProps> = ({ holidays, proposals }) => {
   const months = Array.from({ length: 12 }, (_, i) => new Date(2026, i, 1));
-
   const holidayDates = new Set(holidays.map(h => h.date));
   
   const isLeaveDate = (date: Date) => {
@@ -39,7 +43,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ holidays, proposals, select
   };
 
   const renderMonth = (month: Date) => {
-    const start = startOfWeek(startOfMonth(month));
+    // Replaced startOfWeek and startOfMonth with local native implementations
+    const start = getStartOfWeek(getStartOfMonth(month));
     const end = endOfWeek(endOfMonth(month));
     const days = eachDayOfInterval({ start, end });
 
@@ -50,13 +55,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({ holidays, proposals, select
           <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {days.map((day, i) => {
+          {days.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const isHoliday = holidayDates.has(dateStr);
             const isProposal = isProposalRange(day);
             const isLeave = isLeaveDate(day);
             const isCurrentMonth = isSameMonth(day, month);
-            const isWeekend = format(day, 'i') === '6' || format(day, 'i') === '7'; // Sunday=7, Saturday=6 in some locales but date-fns is better
+            
+            // Native weekend check
+            const dayIdx = day.getDay();
+            const isWeekend = dayIdx === 0 || dayIdx === 6;
 
             let bgColor = 'bg-white';
             let textColor = 'text-slate-700';

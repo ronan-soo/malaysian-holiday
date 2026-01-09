@@ -1,11 +1,20 @@
 
 import React from 'react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { PublicHoliday } from '../types';
 
 interface HolidayListProps {
   holidays: PublicHoliday[];
 }
+
+/**
+ * Safely parses yyyy-MM-dd without timezone shifts.
+ * Using native Date(y, m, d) is safer than new Date(str) in many browser versions.
+ */
+const parseDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 const HolidayList: React.FC<HolidayListProps> = ({ holidays }) => {
   return (
@@ -25,7 +34,7 @@ const HolidayList: React.FC<HolidayListProps> = ({ holidays }) => {
                 <div>
                   <h4 className="font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">{holiday.name}</h4>
                   <p className="text-sm text-slate-500">
-                    {format(parseISO(holiday.date), 'EEEE, d MMM')}
+                    {format(parseDate(holiday.date), 'EEEE, d MMM')}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">

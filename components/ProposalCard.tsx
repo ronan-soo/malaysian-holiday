@@ -1,12 +1,20 @@
 
 import React from 'react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { LongHolidayProposal } from '../types';
 import { getAiRecommendation } from '../services/gemini';
 
 interface ProposalCardProps {
   proposal: LongHolidayProposal;
 }
+
+/**
+ * Safely parses yyyy-MM-dd without timezone shifts.
+ */
+const parseDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 const ProposalCard: React.FC<ProposalCardProps> = ({ proposal }) => {
   const [recommendation, setRecommendation] = React.useState<string | null>(null);
@@ -27,7 +35,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({ proposal }) => {
           <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold">Score: {proposal.score.toFixed(1)}</span>
         </div>
         <h3 className="text-xl font-bold">
-          {format(parseISO(proposal.startDate), 'MMM d')} — {format(parseISO(proposal.endDate), 'MMM d')}
+          {format(parseDate(proposal.startDate), 'MMM d')} — {format(parseDate(proposal.endDate), 'MMM d')}
         </h3>
         <p className="text-sm opacity-90 mt-1">{proposal.totalDays} Consecutive Days Off</p>
       </div>

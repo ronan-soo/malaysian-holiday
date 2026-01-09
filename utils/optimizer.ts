@@ -1,7 +1,11 @@
 
-import { addDays, format, isSaturday, isSunday, parseISO, eachDayOfInterval, differenceInCalendarDays } from 'date-fns';
+import { format, isSaturday, isSunday, eachDayOfInterval } from 'date-fns';
 import { PublicHoliday, LongHolidayProposal, DayType } from '../types';
 
+/**
+ * Generates optimized holiday proposals by scanning the year and finding
+ * contiguous blocks of off-days that minimize leave required.
+ */
 export const getLongHolidays = (
   year: number,
   holidays: PublicHoliday[],
@@ -29,7 +33,6 @@ export const getLongHolidays = (
   };
 
   // Sliding window across the year to find contiguous blocks that satisfy maxLeave
-  // Optimization: only start scanning from holidays or weekends
   for (let i = 0; i < daysInYear.length; i++) {
     const startDate = daysInYear[i];
     if (getDayType(startDate) === DayType.WORK) continue;
@@ -61,7 +64,7 @@ export const getLongHolidays = (
       // If we finished a potential block, validate and record
       const totalDays = currentBlock.length;
       if (totalDays >= minTotal && hasHoliday) {
-        // Backtrack to ensure we don't end on a leave day (inefficient)
+        // Backtrack to ensure we don't end on a leave day
         let trimmedBlock = [...currentBlock];
         let trimmedLeave = leaveUsed;
         while (trimmedBlock.length > 0 && getDayType(trimmedBlock[trimmedBlock.length - 1]) === DayType.WORK) {
@@ -93,8 +96,7 @@ export const getLongHolidays = (
     }
   }
 
-  // Deduplicate and filter overlapping
-  // Keep the most efficient proposal for any given range
+  // Deduplicate and filter overlapping blocks by keeping the best score
   const uniqueProposals = proposals.sort((a, b) => b.score - a.score).reduce((acc, current) => {
     const isOverlapping = acc.some(p => 
       (current.startDate >= p.startDate && current.startDate <= p.endDate) ||
