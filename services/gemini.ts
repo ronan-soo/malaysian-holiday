@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { LongHolidayProposal } from "../types";
 
 export const getAiRecommendation = async (proposal: LongHolidayProposal) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: 'AIzaSyCyRBZPrdJk7sgE-7k5KTPETBAv0R6125w' });
   const prompt = `
     Based on this Malaysian long holiday proposal:
     Dates: ${proposal.startDate} to ${proposal.endDate} (${proposal.totalDays} days total)
